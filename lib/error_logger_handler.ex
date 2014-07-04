@@ -88,16 +88,16 @@ defmodule ExLogger.ErrorLoggerHandler do
       not nil?(app = Dict.get(details, :application)) ->
         app = to_string(app)
         node = to_string(Dict.get(details, :started_at))
-        ExLogger.info("Application ${application} started on node ${node}",
+        ExLogger.verbose("Application ${application} started on node ${node}",
                       type: :application_start, application: app, node: node,
                       __MODULE__: nil, __PID__: nil)
       not nil?(started = Dict.get(details, :started)) ->
-        ExLogger.info "Supervisor ${supervisor} started ${mfa} at ${__PID__}",
+        ExLogger.verbose "Supervisor ${supervisor} started ${mfa} at ${__PID__}",
                     type: :supervisor_start,
                     supervisor: supervisor_name(details[:supervisor]), mfa: ExLogger.MFA.construct(started[:mfargs]),
                     __MODULE__: nil, __PID__: details[:pid]
       true ->
-        ExLogger.info "PROGRESS REPORT ${report}",
+        ExLogger.verbose "PROGRESS REPORT ${report}",
                    type: :progress_report, report: details,
                    __MODULE__: nil, __PID__: pid
     end

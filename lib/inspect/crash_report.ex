@@ -1,9 +1,11 @@
 defimpl ExLogger.Inspect, for: ExLogger.ErrorLoggerHandler.CrashReport do
- 
+
   alias ExLogger.ErrorLoggerHandler.CrashReport
+  alias ExLogger.ErrorLoggerHandler.Reason
+
   import Kernel, except: [to_string: 1]
 
-  def to_string(CrashReport[] = crash) do
+  def to_string(%CrashReport{} = crash) do
     name =
     case (crash.registered_name || []) do
       [] ->
@@ -13,7 +15,7 @@ defimpl ExLogger.Inspect, for: ExLogger.ErrorLoggerHandler.CrashReport do
         atom
     end
     {class, reason, _trace} = crash.error_info
-    reason = ExLogger.inspect(ExLogger.ErrorLoggerHandler.Reason[reason: reason])
+    reason = ExLogger.inspect(%Reason{reason: reason})
     type = case class do
       :exit -> "exited"
       _ -> "crashed"

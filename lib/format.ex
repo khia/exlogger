@@ -29,7 +29,7 @@ defmodule ExLogger.Format do
     inspect(object)
   end
   def format(message, object) do
-    lc component inlist expand_message(message) do
+    for component <- expand_message(message) do
       cond do
         is_atom(component) ->
           ExLogger.Inspect.to_string(object[component])
@@ -46,8 +46,8 @@ defmodule ExLogger.Format do
 
   defp convert_name(name_acc) do
     case String.split(name_acc,".") do
-      [name] -> binary_to_atom(name)
-      names -> (lc name inlist names, do: binary_to_atom(name))
+      [name] -> String.to_atom(name)
+      names -> (for name <- names, do: String.to_atom(name))
     end
   end
 end

@@ -1,6 +1,7 @@
 defmodule ExLogger.BackendWatcher do
-  use GenServer.Behaviour    
+  use GenServer
   use ExLogger
+  require Record
 
   def start(event, module, options) do
     :supervisor.start_child(ExLogger.Sup.BackendWatcher, [event, module, options])
@@ -10,7 +11,7 @@ defmodule ExLogger.BackendWatcher do
     :gen_server.start_link(__MODULE__,[event, module, options], [])
   end
 
-  defrecordp :state, :state, event: nil, module: nil, options: nil
+  Record.defrecordp :state, :state, event: nil, module: nil, options: nil
 
   def init([event, module, options]) do
     install_handler(event, module, options)
@@ -18,15 +19,15 @@ defmodule ExLogger.BackendWatcher do
   end
 
   def handle_info({:gen_event_EXIT, module, reason},
-                  state(module: module) = s) when reason in %w(normal shutdown)a do
+                  state(module: module) = s) when reason in ~w(normal shutdown)a do
     {:stop, :normal, s}
   end
 
   def handle_info({:gen_event_EXIT, module, reason},
-                  state(module: module, options: options, event: event) = s) do    
+                  state(module: module, options: options, event: event) = s) do
     install_handler(event, module, options)
     ExLogger.error "ExLogger ${backend} backend exited with reason ${reason}",
-                   application: :exlogger, backend: module, reason: ExLogger.ErrorLoggerHandler.Reason[reason: reason],
+                   application: :exlogger, backend: module, reason: %ExLogger.ErrorLoggerHandler.Reason{reason: reason},
                    __MODULE__: nil, __PID__: nil
     {:noreply, s}
   end

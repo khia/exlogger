@@ -6,14 +6,15 @@ defmodule ExLogger.Backend do
 
   defmacro __using__(_) do
     quote do
-      use GenEvent.Behaviour
-      Record.import ExLogger.Message, as: :message
+      use GenEvent
+      alias ExLogger.Message
+      require Record
       @behaviour ExLogger.Backend
       require ExLogger
 
       @levels ExLogger.levels
       @top_level hd(@levels)
-      defrecordp :state, :state, state: nil, log_level: nil
+      Record.defrecordp :state, :state, state: nil, log_level: nil
 
       def init(options) do
         log_level = options[:log_level] || :application.get_all_env(:exlogger)[:log_level] ||
@@ -26,16 +27,16 @@ defmodule ExLogger.Backend do
         end
       end
 
-      lc level inlist @levels, level1 inlist @levels do
+      for level <- @levels, level1 <- @levels do
         @level level
         @level1 level1
         if Enum.find_index(@levels, fn(l) -> l == level end) >= Enum.find_index(@levels, fn(l) -> l == level1 end) do
-          def handle_event({:log, message(level: @level) = msg}, state(state: backend_state, log_level: @level1) = s) do
+          def handle_event({:log, %Message{level: @level} = msg}, state(state: backend_state, log_level: @level1) = s) do
             backend_state = handle_log(msg, backend_state)
             {:ok, state(s, state: backend_state)}
           end
-        else 
-          def handle_event({:log, message(level: @level) = msg}, state(state: backend_state, log_level: @level1) = s) do
+        else
+          def handle_event({:log, %Message{level: @level} = msg}, state(state: backend_state, log_level: @level1) = s) do
             {:ok, s}
           end
         end

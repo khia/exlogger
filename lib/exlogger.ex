@@ -4,30 +4,33 @@ defmodule ExLogger do
   @type  object :: [{atom, term}]
   @type  message :: String.t
 
-  defrecord Message, timestamp: nil,
-                     level: nil, message: nil, object: [],
-                     module: nil, file: nil, line: nil, pid: nil
+  defmodule Message do
+    defstruct timestamp: nil,
+             level: nil, message: nil, object: [],
+             module: nil, file: nil, line: nil, pid: nil
+  end
 
-  defrecord MFA, module: nil, function: nil, arguments: [], properties: [] do
+  defmodule MFA do
+    defstruct module: nil, function: nil, arguments: [], properties: []
 
     def construct([head|_]) do
       construct(head)
     end
     def construct({m, f, a, properties}) do
-      __MODULE__[module: m, function: f, arguments: a, properties: properties]
+      %__MODULE__{module: m, function: f, arguments: a, properties: properties}
     end
 
     def construct({m, f, a}) do
-      __MODULE__[module: m, function: f, arguments: a]
+      %__MODULE__{module: m, function: f, arguments: a}
     end
 
     def construct(nil) do
-      __MODULE__[]
+      %__MODULE__{}
     end
 
   end
 
-  @levels %w(verbose debug info notice warning error critical alert emergency)a
+  @levels ~w(verbose debug info notice warning error critical alert emergency)a
   def levels, do: @levels
 
   def register_backend({backend, options}) when is_atom(backend) do
@@ -47,15 +50,15 @@ defmodule ExLogger do
   end
 
 
-  lc level inlist @levels do
-    defmacro unquote(level)(msg // nil, object // []) do
+  for level <- @levels do
+    defmacro unquote(level)(msg \\ nil, object \\ []) do
       excluded_levels = unless nil?(__CALLER__.module) do
-        Module.get_attribute __CALLER__.module, :exlogger_excluded_levels
+        Module.get_attribute __CALLER__.module, :exlogger_excluded_levels, nil
       else
         []
       end
       default_attributes = unless nil?(__CALLER__.module) do
-        Module.get_attribute __CALLER__.module, :exlogger_default_attributes
+        Module.get_attribute __CALLER__.module, :exlogger_default_attributes, nil
       else
         []
       end
@@ -104,7 +107,7 @@ defmodule ExLogger do
     default_excluded_levels = quote do
       cond do
         Enum.any?(:application.which_applications, fn({a, _, _}) -> a == :mix end) and Mix.env == :prod ->
-          %w(debug verbose)a
+          ~w(debug verbose)a
         true -> []
       end
     end
@@ -119,7 +122,7 @@ defmodule ExLogger do
       quote do
         unquote(prolog)
         @exlogger_excluded_levels unquote(excluded_levels)
-        @exlogger_default_attributes (Module.get_attribute(__MODULE__, :exlogger_default_attributes, false) || []) ++ unquote(default_attributes)
+        @exlogger_default_attributes (Module.get_attribute(__MODULE__, :exlogger_default_attributes, nil) || []) ++ unquote(default_attributes)
       end
     else
       prolog

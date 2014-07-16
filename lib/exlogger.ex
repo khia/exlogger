@@ -82,12 +82,12 @@ defmodule ExLogger do
                             Dict.delete(:__FILE__) |>
                             Dict.delete(:__LINE__) |>
                             Dict.delete(:__PID__)
-          log_msg = ExLogger.Message[timestamp: :os.timestamp,
-                                     level: unquote(level), message: unquote(msg),
-                                     object: stripped_object,
-                                     module: object[:__MODULE__],
-                                     file: object[:__FILE__], line: object[:__LINE__],
-                                     pid: object[:__PID__]]
+          log_msg = %ExLogger.Message{timestamp: :os.timestamp,
+                                      level: unquote(level), message: unquote(msg),
+                                      object: stripped_object,
+                                      module: object[:__MODULE__],
+                                      file: object[:__FILE__], line: object[:__LINE__],
+                                      pid: object[:__PID__]}
           event = case Process.get(ExLogger.Event) do
             nil ->
               event = Process.whereis(ExLogger.Event)
